@@ -1,5 +1,5 @@
 /* ================================================================
-   Java Streams Deep-Dive — Animated Factory Engine
+   Java Streams Deep-Dive — Voice-Synchronized Auto-Play Engine
    ================================================================ */
 
 (function () {
@@ -24,10 +24,9 @@
       this.x = Math.random() * canvas.width;
       this.y = Math.random() * canvas.height;
       this.size = Math.random() * 3 + 1;
-      this.speedX = Math.random() * 0.6 + 0.2; // Move horizontally right like a stream
+      this.speedX = Math.random() * 0.5 + 0.2;
       this.speedY = (Math.random() - 0.5) * 0.2;
-      this.opacity = Math.random() * 0.6 + 0.2;
-      // Cyan (185), Lime (150), Amber (40), Pink (330)
+      this.opacity = Math.random() * 0.5 + 0.2;
       const hues = [185, 150, 40, 330];
       this.hue = hues[Math.floor(Math.random() * hues.length)];
       this.pulse = Math.random() * Math.PI * 2;
@@ -35,7 +34,7 @@
     update() {
       this.x += this.speedX;
       this.y += this.speedY;
-      this.pulse += 0.03;
+      this.pulse += 0.025;
       if (this.x > canvas.width + 10) this.x = -10;
       if (this.y < 0 || this.y > canvas.height) this.reset();
     }
@@ -55,13 +54,12 @@
     }
   }
 
-  const BUBBLE_COUNT = Math.min(120, Math.floor(window.innerWidth * 0.09));
+  const BUBBLE_COUNT = Math.min(100, Math.floor(window.innerWidth * 0.08));
   const bubbles = Array.from({ length: BUBBLE_COUNT }, () => new LiquidBubble());
 
   function animateBubbles() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Stream lines connecting nearby bubbles horizontally
     for (let i = 0; i < bubbles.length; i++) {
       for (let j = i + 1; j < bubbles.length; j++) {
         const dx = bubbles[i].x - bubbles[j].x;
@@ -84,13 +82,173 @@
   animateBubbles();
 
   // ----------------------------------------------------------------
-  // 2. SECTIONS & INTERSECTION OBSERVER
+  // 2. STATE & TEACHER VOICE ENGINE (Web Speech API)
   // ----------------------------------------------------------------
+  let isVoiceEnabled = false;
+  let isAutoplay = false;
+  let autoplayTimer = null;
+  const synth = window.speechSynthesis;
+
+  const btnVoice = document.getElementById('btn-voice');
+  const btnAutoplay = document.getElementById('btn-autoplay');
   const sections = document.querySelectorAll('.section');
   const navDots = document.querySelectorAll('.nav-dot');
   const progressBar = document.getElementById('progress-bar');
   let currentSection = 0;
 
+  const teacherScripts = [
+    // 0. Hook
+    "Hello there! Imagine standing inside a giant candy factory. You have a long conveyor belt. On one end, fruits roll in. As they move, different machines wash them, cut them, and package them into boxes. In Java, a Stream is just like that conveyor belt! It doesn't store things; it carries your data step by step.",
+
+    // 1. Stream vs Collection
+    "Let's learn the difference between a List and a Stream! Imagine a bucket filled with water. The bucket holds all the water at once. That is a List! Now, imagine a garden hose. Water doesn't sit inside the hose; it flows through when you turn on the tap! That is a Stream! Streams let data flow on demand.",
+
+    // 2. The 3 Stages
+    "Every Java Stream has three simple steps, like baking a cake! Step 1: Gather your raw ingredients from the Source. Step 2: Mix, chop, and filter your ingredients in the Intermediate operations. Step 3: Bake and put the finished cake into a box with the Terminal operation!",
+
+    // 3. Source Station
+    "Stage one is the Source! Think of it like turning on the supply faucet. Data can start flowing out of a List of toys, an array of numbers, a text file on your computer, or even an infinite random number generator!",
+
+    // 4. filter()
+    "Look at the Filter Gate! Imagine you have a basket of apples, bananas, and a slice of pizza. You tell the worker at the gate: Only let red apples pass through! So the worker looks at an apple. Is it red? Yes! It goes down the belt. Then the worker looks at the pizza. Is it a red apple? No! So the worker tosses the pizza into the trash. That is how filter works in Java code!",
+
+    // 5. map()
+    "Now look at the Map machine! Map is a magic transformation box. An apple enters the box. Inside, squish! It turns into a bottle of apple juice! Next, an orange enters. Inside, squish! It turns into orange juice! The number of items stays the same, but map changes every item into something new!",
+
+    // 6. flatMap()
+    "What if you have three wrapped gift boxes? If you use regular map, you just get three boxes. But flatMap opens every gift box and dumps all the toys out onto the belt, making one long, flat row of toys! It flattens nested boxes into a single stream.",
+
+    // 7. sorted and peek
+    "Sorted is like a temporary waiting room. Items pause on the conveyor belt so the machine can line them up in alphabetical order from A to Z! Peek is a small glass window above the belt. It lets you inspect each item for debugging without changing it.",
+
+    // 8. Lazy Evaluation
+    "Here is the coolest magic trick of all! It is called Lazy Evaluation. Imagine building a super long waterslide with ten twists and loops. But guess what? Not a single drop of water flows down the slide until someone turns the red valve at the very end! In Java, all your filters and maps wait patiently. Nothing actually moves until you call a terminal method like collect!",
+
+    // 9. Short-Circuiting
+    "Short circuiting saves time! Imagine your teacher asks you to find one blue crayon in your art box. You open the box, pick up the very first blue crayon, and stop searching immediately! Operations like limit or findFirst stop the stream as soon as they get what they need.",
+
+    // 10. collect()
+    "The Terminal operation is the final stop! It turns on the water tap and collects all your transformed data items into a neat List, a Set, or calculates a final total sum!",
+
+    // 11. Recap
+    "Hooray! You are now a Java Streams master! Just remember the golden formula: Start at the Source, process with Intermediate steps, and finish with a Terminal operation. Great job learning!"
+  ];
+
+  function speakTeacherScript(sectionIndex) {
+    if (!synth) return;
+    synth.cancel(); // Stop any active speech
+    if (autoplayTimer) clearTimeout(autoplayTimer);
+
+    if (!isVoiceEnabled) {
+      // If voice is disabled but Auto-Play is ON, use a 10s timer fallback
+      if (isAutoplay) {
+        autoplayTimer = setTimeout(() => advanceNextSection(), 10000);
+      }
+      return;
+    }
+
+    const text = teacherScripts[sectionIndex];
+    if (!text) return;
+
+    const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
+    let sentenceIndex = 0;
+
+    function speakNextSentence() {
+      if (!isVoiceEnabled || sentenceIndex >= sentences.length) {
+        // Voice finished for this entire section!
+        if (isAutoplay && isVoiceEnabled) {
+          // Wait 1.5 seconds after speaking before advancing to next section
+          autoplayTimer = setTimeout(() => {
+            advanceNextSection();
+          }, 1500);
+        }
+        return;
+      }
+
+      const utterance = new SpeechSynthesisUtterance(sentences[sentenceIndex].trim());
+      utterance.pitch = 1.05;
+      utterance.rate = 0.87;
+
+      const voices = synth.getVoices();
+      const preferredVoice = voices.find(v => v.lang.startsWith('en') && (v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Samantha') || v.name.includes('Karen')));
+      if (preferredVoice) utterance.voice = preferredVoice;
+
+      utterance.onend = () => {
+        sentenceIndex++;
+        if (sentenceIndex < sentences.length) {
+          setTimeout(speakNextSentence, 200);
+        } else {
+          // Last sentence finished!
+          if (isAutoplay && isVoiceEnabled) {
+            autoplayTimer = setTimeout(() => {
+              advanceNextSection();
+            }, 1500);
+          }
+        }
+      };
+
+      utterance.onerror = () => {
+        if (isAutoplay) {
+          autoplayTimer = setTimeout(() => advanceNextSection(), 2000);
+        }
+      };
+
+      synth.speak(utterance);
+    }
+
+    speakNextSentence();
+  }
+
+  function advanceNextSection() {
+    if (currentSection < sections.length - 1) {
+      sections[currentSection + 1].scrollIntoView({ behavior: 'smooth' });
+    } else {
+      // Reached the end section! Stop autoplay
+      stopAutoplay();
+    }
+  }
+
+  function stopAutoplay() {
+    isAutoplay = false;
+    if (autoplayTimer) clearTimeout(autoplayTimer);
+    btnAutoplay.classList.remove('active');
+    btnAutoplay.textContent = '▶ Auto-Play';
+  }
+
+  // Voice Toggle Button
+  if (btnVoice) {
+    btnVoice.addEventListener('click', () => {
+      isVoiceEnabled = !isVoiceEnabled;
+      btnVoice.classList.toggle('active', isVoiceEnabled);
+      btnVoice.textContent = isVoiceEnabled ? '🎙️ Teacher Voice: ON' : '🎙️ Teacher Voice: OFF';
+
+      if (isVoiceEnabled) {
+        speakTeacherScript(currentSection);
+      } else {
+        if (synth) synth.cancel();
+      }
+    });
+  }
+
+  // Auto-Play Button
+  if (btnAutoplay) {
+    btnAutoplay.addEventListener('click', () => {
+      isAutoplay = !isAutoplay;
+      btnAutoplay.classList.toggle('active', isAutoplay);
+      btnAutoplay.textContent = isAutoplay ? '⏸ Pause' : '▶ Auto-Play';
+
+      if (isAutoplay) {
+        // Start speaking/advancing from current section
+        speakTeacherScript(currentSection);
+      } else {
+        stopAutoplay();
+      }
+    });
+  }
+
+  // ----------------------------------------------------------------
+  // 3. SECTIONS & INTERSECTION OBSERVER
+  // ----------------------------------------------------------------
   const observerOptions = {
     root: null,
     rootMargin: '-20% 0px -20% 0px',
@@ -123,6 +281,9 @@
     navDots.forEach((d, i) => d.classList.toggle('active', i === idx));
     const progress = ((idx + 1) / sections.length) * 100;
     progressBar.style.width = progress + '%';
+
+    // Speak teacher script (and auto-advance when done if autoplay is ON)
+    speakTeacherScript(idx);
   }
 
   navDots.forEach(dot => {
@@ -133,62 +294,53 @@
   });
 
   // ----------------------------------------------------------------
-  // 3. INTERACTIVE FACTORY PIPELINE SIMULATORS
+  // 4. BALANCED INTERACTIVE PIPELINE SIMULATORS
   // ----------------------------------------------------------------
 
-  // Sim 1: General Fruit -> Juice Stream
+  // Sim 1: Fruit -> Juice Stream
   window.runStreamSim1 = function () {
     const track = document.getElementById('track-sim1');
     if (!track) return;
 
-    // Remove existing animated bubbles
     track.querySelectorAll('.data-packet-bubble').forEach(el => el.remove());
 
     const items = [
-      { emoji: '🍎', isFruit: true, juice: '🧃' },
-      { emoji: '🍕', isFruit: false, juice: '❌' },
-      { emoji: '🍌', isFruit: true, juice: '🍹' },
-      { emoji: '🥦', isFruit: false, juice: '❌' }
+      { emoji: '🍎', label: 'Apple', isFruit: true, juice: '🧃' },
+      { emoji: '🍕', label: 'Pizza', isFruit: false, juice: '❌' },
+      { emoji: '🍌', label: 'Banana', isFruit: true, juice: '🍹' },
     ];
 
     items.forEach((item, index) => {
       setTimeout(() => {
         const bubble = document.createElement('div');
         bubble.className = 'data-packet-bubble';
-        bubble.textContent = item.emoji;
+        bubble.innerHTML = `<span>${item.emoji}</span><small style="font-size:0.6rem;display:block;">${item.label}</small>`;
         bubble.style.left = '5%';
-        bubble.style.top = '25%';
+        bubble.style.top = '15%';
         track.appendChild(bubble);
 
-        // Step 1: Move to Filter Node
         setTimeout(() => {
           bubble.style.left = '32%';
           if (!item.isFruit) {
-            // Rejected at filter!
             bubble.classList.add('rejected');
-            bubble.textContent = '❌';
-            setTimeout(() => bubble.remove(), 1200);
+            bubble.innerHTML = `<span>❌</span><small style="font-size:0.55rem;">Tossed Out!</small>`;
+            setTimeout(() => bubble.remove(), 1400);
           } else {
-            // Passed filter -> Move to Map Node
             bubble.classList.add('passed');
             setTimeout(() => {
               bubble.style.left = '60%';
-              // Morph at map station!
-              bubble.textContent = item.juice;
+              bubble.innerHTML = `<span>${item.juice}</span><small style="font-size:0.55rem;">Morphed!</small>`;
               bubble.style.borderColor = 'var(--pink)';
-              bubble.style.boxShadow = '0 0 16px var(--pink)';
 
-              // Move to Terminal Collect
               setTimeout(() => {
                 bubble.style.left = '88%';
                 bubble.style.borderColor = 'var(--lime)';
-                bubble.style.boxShadow = '0 0 16px var(--lime)';
-                setTimeout(() => bubble.remove(), 1500);
-              }, 900);
-            }, 900);
+                setTimeout(() => bubble.remove(), 1400);
+              }, 1200);
+            }, 1200);
           }
-        }, 800);
-      }, index * 1200);
+        }, 1200);
+      }, index * 1600);
     });
   };
 
@@ -199,37 +351,37 @@
 
     track.querySelectorAll('.data-packet-bubble').forEach(el => el.remove());
 
-    const numbers = [2, 8, 3, 9, 1];
+    const numbers = [2, 8, 3, 9];
 
     numbers.forEach((num, index) => {
       setTimeout(() => {
         const bubble = document.createElement('div');
         bubble.className = 'data-packet-bubble';
-        bubble.textContent = num;
-        bubble.style.left = '10%';
-        bubble.style.top = '25%';
+        bubble.innerHTML = `<span>${num}</span>`;
+        bubble.style.left = '8%';
+        bubble.style.top = '20%';
         track.appendChild(bubble);
 
         setTimeout(() => {
           bubble.style.left = '45%';
           if (num <= 5) {
-            // Rejected
             bubble.classList.add('rejected');
-            setTimeout(() => bubble.remove(), 1000);
+            bubble.innerHTML = `<span>${num}</span><small style="font-size:0.55rem;">≤5 Drop!</small>`;
+            setTimeout(() => bubble.remove(), 1400);
           } else {
-            // Passed!
             bubble.classList.add('passed');
+            bubble.innerHTML = `<span>${num}</span><small style="font-size:0.55rem;">&gt;5 Pass!</small>`;
             setTimeout(() => {
               bubble.style.left = '82%';
-              setTimeout(() => bubble.remove(), 1200);
-            }, 800);
+              setTimeout(() => bubble.remove(), 1400);
+            }, 1100);
           }
-        }, 800);
-      }, index * 1000);
+        }, 1100);
+      }, index * 1500);
     });
   };
 
-  // Sim 3: Map Words to Word Length
+  // Sim 3: Map Words to Length
   window.runMapSim = function () {
     const track = document.getElementById('track-map');
     if (!track) return;
@@ -247,27 +399,25 @@
         bubble.className = 'data-packet-bubble';
         bubble.style.width = 'auto';
         bubble.style.borderRadius = '2rem';
-        bubble.style.padding = '0.4rem 0.8rem';
+        bubble.style.padding = '0.4rem 0.9rem';
         bubble.textContent = `"${item.text}"`;
         bubble.style.left = '8%';
-        bubble.style.top = '25%';
+        bubble.style.top = '20%';
         track.appendChild(bubble);
 
         setTimeout(() => {
           bubble.style.left = '45%';
-          bubble.textContent = `len: ${item.len}`;
+          bubble.textContent = `Squish! -> len: ${item.len}`;
           bubble.style.borderColor = 'var(--pink)';
-          bubble.style.boxShadow = '0 0 16px var(--pink)';
 
           setTimeout(() => {
             bubble.style.left = '80%';
-            bubble.textContent = item.len;
+            bubble.textContent = `Result: ${item.len}`;
             bubble.style.borderColor = 'var(--lime)';
-            bubble.style.boxShadow = '0 0 16px var(--lime)';
-            setTimeout(() => bubble.remove(), 1200);
-          }, 900);
-        }, 900);
-      }, index * 1500);
+            setTimeout(() => bubble.remove(), 1400);
+          }, 1200);
+        }, 1200);
+      }, index * 1700);
     });
   };
 
@@ -280,17 +430,16 @@
     if (!btnStatus || !track) return;
 
     if (valveOpen) {
-      btnStatus.textContent = 'OPEN! (Flowing!)';
+      btnStatus.textContent = 'OPENED! (Data Starts Flowing!)';
       btnStatus.style.color = 'var(--lime)';
 
-      // Instantly launch flowing data bubbles
-      for (let i = 0; i < 4; i++) {
+      for (let i = 0; i < 3; i++) {
         setTimeout(() => {
           const bubble = document.createElement('div');
           bubble.className = 'data-packet-bubble passed';
-          bubble.textContent = '⚡';
+          bubble.textContent = '💧';
           bubble.style.left = '10%';
-          bubble.style.top = '25%';
+          bubble.style.top = '20%';
           track.appendChild(bubble);
 
           setTimeout(() => {
@@ -300,48 +449,20 @@
               setTimeout(() => {
                 bubble.style.left = '88%';
                 setTimeout(() => bubble.remove(), 800);
-              }, 500);
-            }, 500);
-          }, 500);
-        }, i * 600);
+              }, 700);
+            }, 700);
+          }, 700);
+        }, i * 800);
       }
     } else {
-      btnStatus.textContent = 'CLOSED (Lazy)';
+      btnStatus.textContent = 'CLOSED (Lazy - No Data Moves)';
       btnStatus.style.color = 'var(--pink)';
       track.querySelectorAll('.data-packet-bubble').forEach(el => el.remove());
     }
   };
 
   // ----------------------------------------------------------------
-  // 4. AUTO-PLAY MODE
-  // ----------------------------------------------------------------
-  let autoplayInterval = null;
-  let isAutoplay = false;
-  const btnAutoplay = document.getElementById('btn-autoplay');
-
-  btnAutoplay.addEventListener('click', () => {
-    isAutoplay = !isAutoplay;
-    btnAutoplay.classList.toggle('active', isAutoplay);
-    btnAutoplay.textContent = isAutoplay ? '⏸ Pause' : '▶ Auto-Play';
-
-    if (isAutoplay) {
-      autoplayInterval = setInterval(() => {
-        if (currentSection < sections.length - 1) {
-          sections[currentSection + 1].scrollIntoView({ behavior: 'smooth' });
-        } else {
-          clearInterval(autoplayInterval);
-          isAutoplay = false;
-          btnAutoplay.classList.remove('active');
-          btnAutoplay.textContent = '▶ Auto-Play';
-        }
-      }, 8000);
-    } else {
-      clearInterval(autoplayInterval);
-    }
-  });
-
-  // ----------------------------------------------------------------
-  // 5. AMBIENT AUDIO (Web Audio API — Cheerful Pentatonic Factory Pad)
+  // 5. AMBIENT AUDIO
   // ----------------------------------------------------------------
   let audioCtx = null;
   let audioPlaying = false;
@@ -356,7 +477,6 @@
     masterGain.gain.value = 0;
     masterGain.connect(audioCtx.destination);
 
-    // Cheerful C Major Pentatonic: C3 (130.81), G3 (196.0), C4 (261.63), E4 (329.63)
     const frequencies = [130.81, 196.0, 261.63, 329.63];
     frequencies.forEach((freq, i) => {
       const osc = audioCtx.createOscillator();
@@ -364,7 +484,7 @@
       osc.type = i % 2 === 0 ? 'sine' : 'triangle';
       osc.frequency.value = freq;
       osc.detune.value = Math.random() * 6 - 3;
-      gain.gain.value = 0.05;
+      gain.gain.value = 0.03;
       osc.connect(gain);
       gain.connect(masterGain);
       osc.start();
@@ -384,7 +504,7 @@
       audioCtx.resume();
       masterGain.gain.cancelScheduledValues(now);
       masterGain.gain.setValueAtTime(masterGain.gain.value, now);
-      masterGain.gain.linearRampToValueAtTime(0.4, now + 2);
+      masterGain.gain.linearRampToValueAtTime(0.3, now + 2);
     } else {
       masterGain.gain.cancelScheduledValues(now);
       masterGain.gain.setValueAtTime(masterGain.gain.value, now);
@@ -393,7 +513,7 @@
   });
 
   // ----------------------------------------------------------------
-  // 6. KEYBOARD NAVIGATION & INITIALIZATION
+  // 6. KEYBOARD NAVIGATION
   // ----------------------------------------------------------------
   document.addEventListener('keydown', (e) => {
     if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') {
@@ -418,7 +538,7 @@
   activateSection(0);
 
   console.log(
-    '%c🚀 Java Streams Factory loaded! Scroll or press ↓ to explore.',
+    '%c✨ Event-Driven Voice Synchronization enabled! Auto-Play advances ONLY after teacher voice finishes.',
     'color: #06b6d4; font-size: 14px; font-family: sans-serif;'
   );
 

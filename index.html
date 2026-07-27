@@ -37,6 +37,7 @@
   <!-- ============ CONTROLS ============ -->
   <div class="controls">
     <button class="ctrl-btn" id="btn-autoplay" title="Auto-advance sections">▶ Auto-Play</button>
+    <button class="ctrl-btn" id="btn-voice" title="Toggle Slow AI Teacher Voice Narration">🎙️ Teacher Voice: OFF</button>
     <button class="ctrl-btn" id="btn-audio" title="Toggle ambient audio">🔇 Audio</button>
   </div>
 
@@ -44,17 +45,18 @@
        SECTION 1 — HOOK
        ================================================================ -->
   <section class="section active" id="section-hook">
-    <span class="section-tag">Welcome to the Factory</span>
+    <span class="section-tag">Welcome to the Candy &amp; Toy Factory</span>
     <h1 class="section-title">What is a <span class="pop-cyan">Java Stream</span>?</h1>
     <p class="section-subtitle">
-      Stop thinking of Streams as data storage. Think of a Stream as a <strong>magical conveyor belt</strong> where data flows through processing stations!
+      Stop thinking of Streams as data storage! A Stream is a <strong>magical conveyor belt</strong> where data items travel one by one!
     </p>
 
-    <!-- 5th Grade Analogy -->
+    <!-- 5th Grade Story Card -->
     <div class="kid-analogy">
       <span class="kid-icon">🏬</span>
       <div class="kid-text">
-        <strong>5th Grade Secret:</strong> Imagine a toy factory conveyor belt! Toys move past workers who paint them, inspect them, and put them into boxes. A Stream is the conveyor belt — not the toy box!
+        <strong>👧👦 5th Grade Story Time:</strong><br />
+        Imagine standing inside a giant candy factory! Raw fruits roll onto a long conveyor belt. As they move down the line, machines wash them, chop them, and pack them in boxes. A <strong>Stream</strong> is that moving conveyor belt!
       </div>
     </div>
 
@@ -62,14 +64,14 @@
     <div class="pipeline-stage-box">
       <div class="pipeline-header">
         <div class="pipeline-title-badge">🏭 Live Factory Simulation #1</div>
-        <button class="btn-trigger-stream" onclick="runStreamSim1()">▶ Run Pipeline</button>
+        <button class="btn-trigger-stream" onclick="runStreamSim1()">▶ Run Conveyor Belt</button>
       </div>
 
       <div class="conveyor-track" id="track-sim1">
-        <div class="station-node source">📦 Source<br />(Fruits)</div>
+        <div class="station-node source">📦 Source<br />(Fruits Input)</div>
         <div class="station-node filter">🔍 filter()<br />(Red fruits only)</div>
-        <div class="station-node map">🥤 map()<br />(Make Juice)</div>
-        <div class="station-node terminal">📥 collect()<br />(Juice Box)</div>
+        <div class="station-node map">🥤 map()<br />(Morph to Juice)</div>
+        <div class="station-node terminal">📥 collect()<br />(Pack in Box)</div>
       </div>
     </div>
   </section>
@@ -78,35 +80,34 @@
        SECTION 2 — STREAM VS COLLECTION
        ================================================================ -->
   <section class="section" id="section-vs">
-    <span class="section-tag">The Big Difference</span>
-    <h1 class="section-title">Water Bucket vs. <span class="pop-amber">Water Pipe</span></h1>
+    <span class="section-tag">The Big Secret</span>
+    <h1 class="section-title">Water Bucket vs. <span class="pop-amber">Garden Hose</span></h1>
     <p class="section-subtitle">
-      A <strong>Collection (List/Set)</strong> stores data in memory. A <strong>Stream</strong> processes data on demand as it flows through.
+      Understanding the difference between a List and a Stream in 30 seconds!
     </p>
 
     <div class="vs-comparison-grid">
       <div class="vs-card">
         <div class="vs-card-icon">🪣</div>
-        <div class="vs-card-title pop-pink">List / Collection (The Bucket)</div>
+        <div class="vs-card-title pop-pink">List / Collection (The Water Bucket)</div>
         <p style="font-size:0.85rem;color:var(--text-muted);">
-          Holds all items at once in memory. You can add, remove, and visit items repeatedly.
+          A List holds all items at once in memory! Like a bucket holding water, you can look inside whenever you want.
         </p>
         <div class="code-block" style="width:100%;margin-top:0.5rem;">
-          <div class="code-line"><span class="tp">List</span>&lt;<span class="tp">String</span>&gt; fruits =</div>
-          <div class="code-line">  <span class="tp">List</span>.<span class="fn">of</span>(<span class="st">"🍎"</span>, <span class="st">"🍌"</span>, <span class="st">"🍓"</span>);</div>
+          <div class="code-line"><span class="cm">// List holds items in memory</span></div>
+          <div class="code-line"><span class="tp">List</span>&lt;<span class="tp">String</span>&gt; fruits = <span class="tp">List</span>.<span class="fn">of</span>(<span class="st">"🍎"</span>, <span class="st">"🍌"</span>, <span class="st">"🍓"</span>);</div>
         </div>
       </div>
 
       <div class="vs-card" style="border-color:var(--cyan);">
         <div class="vs-card-icon">🌊</div>
-        <div class="vs-card-title pop-cyan">Java Stream (The Water Pipe)</div>
+        <div class="vs-card-title pop-cyan">Java Stream (The Garden Hose)</div>
         <p style="font-size:0.85rem;color:var(--text-muted);">
-          Does NOT store items! Items travel through once, get processed, and exit at the end.
+          A Stream NEVER holds items! Water doesn't sit inside the hose; it flows through when turned on!
         </p>
         <div class="code-block" style="width:100%;margin-top:0.5rem;">
-          <div class="code-line">fruits.<span class="fn">stream</span>()</div>
-          <div class="code-line">  .<span class="fn">filter</span>(f -&gt; isRed(f))</div>
-          <div class="code-line">  .<span class="fn">collect</span>(<span class="tp">Collectors</span>.<span class="fn">toList</span>());</div>
+          <div class="code-line"><span class="cm">// Stream flows items one-by-one</span></div>
+          <div class="code-line">fruits.<span class="fn">stream</span>().<span class="fn">filter</span>(...).<span class="fn">collect</span>(...);</div>
         </div>
       </div>
     </div>
@@ -116,40 +117,33 @@
        SECTION 3 — THE 3 PIPELINE STAGES
        ================================================================ -->
   <section class="section" id="section-stages">
-    <span class="section-tag">Pipeline Anatomy</span>
+    <span class="section-tag">3 Easy Steps</span>
     <h1 class="section-title">The <span class="pop-lime">3 Stages</span> of Every Stream</h1>
     <p class="section-subtitle">
-      Every Stream pipeline is built like a 3-part recipe: Start → Transform → Finish.
+      Just like baking a birthday cake, every Stream follows 3 simple steps:
     </p>
 
     <div class="stages-flow">
       <div class="stage-step" style="border-color:var(--cyan);">
         <div style="font-size:1.8rem;">💧</div>
-        <div style="font-family:var(--font-pop);" class="pop-cyan">1. Source</div>
-        <div style="font-size:0.75rem;color:var(--text-muted);">List.stream(), Stream.of()</div>
+        <div style="font-family:var(--font-pop);" class="pop-cyan">1. The Source</div>
+        <div style="font-size:0.75rem;color:var(--text-muted);">Gather raw ingredients (List.stream)</div>
       </div>
 
       <div class="stage-arrow">➔</div>
 
       <div class="stage-step" style="border-color:var(--amber);">
         <div style="font-size:1.8rem;">⚙️</div>
-        <div style="font-family:var(--font-pop);" class="pop-amber">2. Intermediate Ops</div>
-        <div style="font-size:0.75rem;color:var(--text-muted);">filter(), map(), sorted()</div>
+        <div style="font-family:var(--font-pop);" class="pop-amber">2. Intermediate Steps</div>
+        <div style="font-size:0.75rem;color:var(--text-muted);">Mix, chop &amp; filter (filter, map)</div>
       </div>
 
       <div class="stage-arrow">➔</div>
 
       <div class="stage-step" style="border-color:var(--lime);">
         <div style="font-size:1.8rem;">🏁</div>
-        <div style="font-family:var(--font-pop);" class="pop-lime">3. Terminal Op</div>
-        <div style="font-size:0.75rem;color:var(--text-muted);">collect(), reduce(), count()</div>
-      </div>
-    </div>
-
-    <div class="kid-analogy">
-      <span class="kid-icon">👨‍🍳</span>
-      <div class="kid-text">
-        <strong>5th Grade Secret:</strong> Think of a baking recipe: 1. Get raw ingredients (Source), 2. Chop and mix them (Intermediate), 3. Bake into a cake (Terminal)!
+        <div style="font-family:var(--font-pop);" class="pop-lime">3. Terminal Step</div>
+        <div style="font-size:0.75rem;color:var(--text-muted);">Bake &amp; put in a box (collect)</div>
       </div>
     </div>
   </section>
@@ -161,18 +155,23 @@
     <span class="section-tag">Stage 1</span>
     <h1 class="section-title">The <span class="pop-cyan">Source Station</span></h1>
     <p class="section-subtitle">
-      Where does the data stream begin? From collections, arrays, files, or custom generators!
+      Where does data come from? From a list of toys, an array of numbers, or a text file!
     </p>
 
+    <div class="kid-analogy">
+      <span class="kid-icon">🚰</span>
+      <div class="kid-text">
+        <strong>👧👦 5th Grade Story Time:</strong><br />
+        The Source is the water faucet! When you open it, data starts flowing. You can open a faucet from a List, an array, or even a random number generator!
+      </div>
+    </div>
+
     <div class="code-block reveal" style="max-width:580px;margin-top:1.5rem;">
-      <div class="code-line"><span class="cm">// 1. From a Collection</span></div>
+      <div class="code-line"><span class="cm">// 1. From a List of fruits</span></div>
       <div class="code-line"><span class="tp">Stream</span>&lt;<span class="tp">String</span>&gt; s1 = list.<span class="fn">stream</span>();</div>
       <div class="code-line"></div>
-      <div class="code-line"><span class="cm">// 2. Direct elements</span></div>
+      <div class="code-line"><span class="cm">// 2. Directly from numbers</span></div>
       <div class="code-line"><span class="tp">Stream</span>&lt;<span class="tp">Integer</span>&gt; s2 = <span class="tp">Stream</span>.<span class="fn">of</span>(<span class="nm">10</span>, <span class="nm">20</span>, <span class="nm">30</span>);</div>
-      <div class="code-line"></div>
-      <div class="code-line"><span class="cm">// 3. Infinite Stream generator</span></div>
-      <div class="code-line"><span class="tp">Stream</span>&lt;<span class="tp">Double</span>&gt; s3 = <span class="tp">Stream</span>.<span class="fn">generate</span>(<span class="tp">Math</span>::random);</div>
     </div>
   </section>
 
@@ -180,30 +179,31 @@
        SECTION 5 — THE FILTER GATE
        ================================================================ -->
   <section class="section" id="section-filter">
-    <span class="section-tag">Intermediate Operation</span>
-    <h1 class="section-title">The <span class="pop-amber">filter()</span> Super Sieve</h1>
+    <span class="section-tag">Stage 2: Intermediate</span>
+    <h1 class="section-title">The <span class="pop-amber">filter()</span> Bouncer</h1>
     <p class="section-subtitle">
-      <code>filter(Predicate)</code> acts as a bouncer at the door. If a data item returns <code>true</code>, it passes; if <code>false</code>, it gets thrown out!
+      <code>filter()</code> checks every item against a rule. Matches pass through; non-matches get thrown into the trash!
     </p>
 
     <div class="kid-analogy">
       <span class="kid-icon">🕵️</span>
       <div class="kid-text">
-        <strong>5th Grade Secret:</strong> It's like a playground rule: <em>"Only kids wearing red shirts can enter the slide!"</em> Everyone else steps aside.
+        <strong>👧👦 5th Grade Story Time:</strong><br />
+        Imagine a basket with apples, bananas, and a slice of pizza 🍕. You tell the helper at the filter gate: <em>"Only let red apples pass!"</em> The apple passes! The pizza is NOT an apple, so it gets tossed into the trash!
       </div>
     </div>
 
     <!-- Live Filter Sim -->
     <div class="pipeline-stage-box">
       <div class="pipeline-header">
-        <div class="pipeline-title-badge">🔍 Interactive Filter Gate: Keep Numbers &gt; 5</div>
-        <button class="btn-trigger-stream" onclick="runFilterSim()">▶ Run Filter Stream</button>
+        <div class="pipeline-title-badge">🔍 Filter Rule: Keep Numbers &gt; 5</div>
+        <button class="btn-trigger-stream" onclick="runFilterSim()">▶ Run Filter Test</button>
       </div>
 
       <div class="conveyor-track" id="track-filter">
-        <div class="station-node source">Input<br />[2, 8, 3, 9, 1]</div>
+        <div class="station-node source">Input<br />[2, 8, 3, 9]</div>
         <div class="station-node filter">🔍 filter(n &gt; 5)</div>
-        <div class="station-node terminal">Output Crate</div>
+        <div class="station-node terminal">Output Box</div>
       </div>
     </div>
   </section>
@@ -212,30 +212,31 @@
        SECTION 6 — THE MORPHING MACHINE (MAP)
        ================================================================ -->
   <section class="section" id="section-map">
-    <span class="section-tag">Intermediate Operation</span>
+    <span class="section-tag">Stage 2: Intermediate</span>
     <h1 class="section-title">The <span class="pop-pink">map()</span> Morpher</h1>
     <p class="section-subtitle">
-      <code>map(Function)</code> transforms each item in the stream into something brand new! Same number of items, totally new shape.
+      <code>map()</code> is a magic transformation box! An item goes in, and a brand new item comes out!
     </p>
 
     <div class="kid-analogy">
       <span class="kid-icon">🧙‍♂️</span>
       <div class="kid-text">
-        <strong>5th Grade Secret:</strong> It's a magic wand! Touch an Apple 🍎 → Morphs into Juice 🧃. Touch an Orange 🍊 → Morphs into OJ 🍹!
+        <strong>👧👦 5th Grade Story Time:</strong><br />
+        An Apple 🍎 enters the magic box. Squish! It turns into Apple Juice 🧃! Next, an Orange 🍊 enters. Squish! It turns into Orange Juice 🍹! The total number of items stays the same, but their shape morphs!
       </div>
     </div>
 
     <!-- Live Map Sim -->
     <div class="pipeline-stage-box">
       <div class="pipeline-header">
-        <div class="pipeline-title-badge">✨ Interactive Map Morpher: String → String Length</div>
-        <button class="btn-trigger-stream" onclick="runMapSim()">▶ Run Map Stream</button>
+        <div class="pipeline-title-badge">✨ Morpher: Words → Word Length Count</div>
+        <button class="btn-trigger-stream" onclick="runMapSim()">▶ Run Morpher Test</button>
       </div>
 
       <div class="conveyor-track" id="track-map">
         <div class="station-node source">Input Words<br />["Cat", "Dragon"]</div>
-        <div class="station-node map">✨ map(word.length())</div>
-        <div class="station-node terminal">Lengths<br />[3, 6]</div>
+        <div class="station-node map">✨ map(word.length)</div>
+        <div class="station-node terminal">Counts<br />[3, 6]</div>
       </div>
     </div>
   </section>
@@ -244,30 +245,25 @@
        SECTION 7 — THE FLATTENING PORTAL (FLATMAP)
        ================================================================ -->
   <section class="section" id="section-flatmap">
-    <span class="section-tag">Intermediate Operation</span>
+    <span class="section-tag">Stage 2: Intermediate</span>
     <h1 class="section-title">The <span class="pop-violet">flatMap()</span> Unpacker</h1>
     <p class="section-subtitle">
-      What if each item is a box of items? <code>flatMap()</code> opens every box and dumps all contents into one single flat stream!
+      What if your conveyor belt receives gift boxes filled with toys? <code>flatMap()</code> opens every box and dumps all toys out into one row!
     </p>
 
     <div class="kid-analogy">
       <span class="kid-icon">🎁</span>
       <div class="kid-text">
-        <strong>5th Grade Secret:</strong> You get 3 gift boxes! Instead of carrying 3 heavy boxes, you open them all and spread out all the toys in a single row on the floor!
+        <strong>👧👦 5th Grade Story Time:</strong><br />
+        You receive 3 wrapped gift boxes! Instead of carrying 3 heavy boxes, flatMap opens all 3 boxes and spreads out every toy into one single flat line on the conveyor belt!
       </div>
     </div>
 
     <div class="code-block reveal" style="max-width:560px;margin-top:1.5rem;">
-      <div class="code-line"><span class="cm">// List of Lists -&gt; Single Flat Stream</span></div>
-      <div class="code-line"><span class="tp">List</span>&lt;<span class="tp">List</span>&lt;<span class="tp">String</span>&gt;&gt; nested = <span class="tp">List</span>.<span class="fn">of</span>(</div>
-      <div class="code-line">  <span class="tp">List</span>.<span class="fn">of</span>(<span class="st">"🍎"</span>, <span class="st">"🍌"</span>),</div>
-      <div class="code-line">  <span class="tp">List</span>.<span class="fn">of</span>(<span class="st">"🍓"</span>, <span class="st">"🍇"</span>)</div>
-      <div class="code-line">);</div>
-      <div class="code-line"></div>
-      <div class="code-line"><span class="tp">List</span>&lt;<span class="tp">String</span>&gt; flat = nested.<span class="fn">stream</span>()</div>
-      <div class="code-line">  .<span class="fn">flatMap</span>(list -&gt; list.<span class="fn">stream</span>())</div>
+      <div class="code-line"><span class="cm">// Unpacking boxes of toys into one single row</span></div>
+      <div class="code-line">giftBoxes.<span class="fn">stream</span>()</div>
+      <div class="code-line">  .<span class="fn">flatMap</span>(box -&gt; box.getToys().<span class="fn">stream</span>())</div>
       <div class="code-line">  .<span class="fn">collect</span>(<span class="tp">Collectors</span>.<span class="fn">toList</span>());</div>
-      <div class="code-line"><span class="cm">// Result: ["🍎", "🍌", "🍓", "🍇"]</span></div>
     </div>
   </section>
 
@@ -275,16 +271,16 @@
        SECTION 8 — SORTED & PEEK
        ================================================================ -->
   <section class="section" id="section-sorted">
-    <span class="section-tag">Intermediate Operations</span>
+    <span class="section-tag">Stage 2: Intermediate</span>
     <h1 class="section-title"><span class="pop-lime">sorted()</span> &amp; <span class="pop-cyan">peek()</span></h1>
     <p class="section-subtitle">
-      <code>sorted()</code> pauses items in a holding area to reorder them. <code>peek()</code> lets you look through a glass window for debugging!
+      <code>sorted()</code> pauses items to line them up in order. <code>peek()</code> is a glass window to look at items for debugging!
     </p>
 
     <div class="code-block reveal" style="max-width:540px;margin-top:1.5rem;">
       <div class="code-line">names.<span class="fn">stream</span>()</div>
-      <div class="code-line">  .<span class="fn">peek</span>(n -&gt; <span class="tp">System</span>.out.<span class="fn">println</span>(<span class="st">"Before: "</span> + n))</div>
-      <div class="code-line">  .<span class="fn">sorted</span>() <span class="cm">// Reorders A-Z</span></div>
+      <div class="code-line">  .<span class="fn">peek</span>(n -&gt; <span class="tp">System</span>.out.<span class="fn">println</span>(<span class="st">"Inspecting: "</span> + n))</div>
+      <div class="code-line">  .<span class="fn">sorted</span>() <span class="cm">// Lines up names A-Z</span></div>
       <div class="code-line">  .<span class="fn">collect</span>(<span class="tp">Collectors</span>.<span class="fn">toList</span>());</div>
     </div>
   </section>
@@ -293,30 +289,31 @@
        SECTION 9 — LAZY EVALUATION
        ================================================================ -->
   <section class="section" id="section-lazy">
-    <span class="section-tag">Mind-Blowing Concept</span>
+    <span class="section-tag">The Magic Faucet</span>
     <h1 class="section-title">The Magic of <span class="pop-pink">Lazy Evaluation</span></h1>
     <p class="section-subtitle">
-      Intermediate operations are <strong>LAZY</strong>. No data moves through the pipe until a Terminal Operation pulls the trigger!
+      Intermediate steps (filter, map) are <strong>LAZY</strong>! Zero items move until you turn on the Terminal Valve!
     </p>
 
     <div class="kid-analogy">
       <span class="kid-icon">🛑</span>
       <div class="kid-text">
-        <strong>5th Grade Secret:</strong> You can build a super long waterslide with 10 loops, but no water flows until someone turns on the faucet (Terminal Operation)!
+        <strong>👧👦 5th Grade Story Time:</strong><br />
+        You can build a super long waterslide with ten twists and loops! But guess what? Not a single drop of water flows down until someone turns the red faucet handle at the very end! That is Lazy Evaluation!
       </div>
     </div>
 
     <!-- Lazy Valve Switch Simulation -->
     <div class="lazy-valve-widget">
       <div class="valve-switch" id="valve-btn" onclick="toggleLazyValve()">
-        <span>🚰 Terminal Trigger Valve: <strong id="valve-status">CLOSED (Lazy)</strong></span>
+        <span>🚰 Terminal Trigger Valve: <strong id="valve-status">CLOSED (Lazy - No Data Moves)</strong></span>
       </div>
 
       <div class="conveyor-track" id="track-lazy">
         <div class="station-node source">Data Waiting...</div>
         <div class="station-node filter">filter() (Idle)</div>
         <div class="station-node map">map() (Idle)</div>
-        <div class="station-node terminal">Terminal Trigger</div>
+        <div class="station-node terminal">Terminal Faucet</div>
       </div>
     </div>
   </section>
@@ -325,25 +322,26 @@
        SECTION 10 — SHORT-CIRCUITING
        ================================================================ -->
   <section class="section" id="section-short">
-    <span class="section-tag">Optimization</span>
+    <span class="section-tag">Time Saver</span>
     <h1 class="section-title"><span class="pop-amber">Short-Circuiting</span> Trapdoors</h1>
     <p class="section-subtitle">
-      Why process 1,000,000 items if you only need 1? Operations like <code>limit(n)</code> or <code>findFirst()</code> stop the pipeline early!
+      Why inspect 1,000 items if you only need 1? <code>limit()</code> and <code>findFirst()</code> stop the belt as soon as you find what you need!
     </p>
 
     <div class="kid-analogy">
       <span class="kid-icon">⏱️</span>
       <div class="kid-text">
-        <strong>5th Grade Secret:</strong> If teacher asks for 1 blue crayon, as soon as you find 1 blue crayon in your box, you stop searching!
+        <strong>👧👦 5th Grade Story Time:</strong><br />
+        If your teacher asks you to find 1 blue crayon in your art box, as soon as you pick up the very first blue crayon, you stop searching immediately! You don't look through all 100 crayons.
       </div>
     </div>
 
     <div class="code-block reveal" style="max-width:540px;margin-top:1.5rem;">
-      <div class="code-line"><span class="cm">// Infinite stream, but only processes 3 items!</span></div>
-      <div class="code-line"><span class="tp">Stream</span>.<span class="fn">iterate</span>(<span class="nm">1</span>, n -&gt; n + <span class="nm">1</span>)</div>
+      <div class="code-line"><span class="cm">// Stops processing after finding 3 items!</span></div>
+      <div class="code-line">numbers.<span class="fn">stream</span>()</div>
       <div class="code-line">  .<span class="fn">filter</span>(n -&gt; n % <span class="nm">2</span> == <span class="nm">0</span>)</div>
-      <div class="code-line">  .<span class="fn">limit</span>(<span class="nm">3</span>) <span class="cm">// Stops flow after 3 matches!</span></div>
-      <div class="code-line">  .<span class="fn">collect</span>(<span class="tp">Collectors</span>.<span class="fn">toList</span>()); <span class="cm">// [2, 4, 6]</span></div>
+      <div class="code-line">  .<span class="fn">limit</span>(<span class="nm">3</span>) <span class="cm">// Stops early!</span></div>
+      <div class="code-line">  .<span class="fn">collect</span>(<span class="tp">Collectors</span>.<span class="fn">toList</span>());</div>
     </div>
   </section>
 
@@ -351,49 +349,41 @@
        SECTION 11 — TERMINAL COLLECTORS
        ================================================================ -->
   <section class="section" id="section-collect">
-    <span class="section-tag">Stage 3</span>
-    <h1 class="section-title">Packing with <span class="pop-lime">collect()</span> &amp; Reducers</h1>
+    <span class="section-tag">Stage 3: Terminal</span>
+    <h1 class="section-title">Packing with <span class="pop-lime">collect()</span></h1>
     <p class="section-subtitle">
-      The Terminal Operation triggers the flow and packs processed data into a List, Set, Map, or a single reduced value!
+      The Terminal operation turns on the faucet and packs all transformed items into a List, a Set, or a single sum total!
     </p>
 
     <div class="code-block reveal" style="max-width:580px;margin-top:1.5rem;">
-      <div class="code-line"><span class="cm">// To List</span></div>
+      <div class="code-line"><span class="cm">// Pack into a List</span></div>
       <div class="code-line">stream.<span class="fn">collect</span>(<span class="tp">Collectors</span>.<span class="fn">toList</span>());</div>
       <div class="code-line"></div>
-      <div class="code-line"><span class="cm">// To Joining String</span></div>
-      <div class="code-line">names.<span class="fn">stream</span>().<span class="fn">collect</span>(<span class="tp">Collectors</span>.<span class="fn">joining</span>(<span class="st">", "</span>));</div>
-      <div class="code-line"></div>
-      <div class="code-line"><span class="cm">// Summing / Reducing</span></div>
-      <div class="code-line"><span class="tp">int</span> sum = numbers.<span class="fn">stream</span>().<span class="fn">reduce</span>(<span class="nm">0</span>, <span class="tp">Integer</span>::sum);</div>
+      <div class="code-line"><span class="cm">// Calculate total sum</span></div>
+      <div class="code-line"><span class="tp">int</span> total = numbers.<span class="fn">stream</span>().<span class="fn">reduce</span>(<span class="nm">0</span>, <span class="tp">Integer</span>::sum);</div>
     </div>
   </section>
 
   <!-- ================================================================
-       SECTION 12 — RECAP & PLAYGROUND
+       SECTION 12 — RECAP
        ================================================================ -->
   <section class="section" id="section-recap">
-    <span class="section-tag">Summary</span>
+    <span class="section-tag">You Did It!</span>
     <h1 class="section-title">You are a <span class="pop-cyan">Stream Master</span>! 🎉</h1>
     <p class="section-subtitle">
-      Remember: Source → Intermediate (Lazy) → Terminal (Triggers Flow).
+      Always remember the 3 simple rules: Source → Intermediate (Lazy) → Terminal (Finish)!
     </p>
 
     <div class="final-summary-card">
       <div style="font-family:var(--font-pop);font-size:1.4rem;color:var(--amber);margin-bottom:0.8rem;">
-        🚀 Golden Rules of Java Streams
+        🚀 The 3 Golden Stream Rules
       </div>
-      <div style="text-align:left;font-size:0.9rem;line-height:1.8;color:var(--cream);">
-        1. <strong>Streams don't store data</strong> — they process it on the fly.<br />
-        2. <strong>Streams cannot be reused</strong> — once consumed by a terminal op, create a new stream.<br />
-        3. <strong>Lazy until triggered</strong> — nothing happens without a terminal operation.<br />
-        4. <strong>Keep lambda functions pure</strong> — avoid side effects inside filter/map.
+      <div style="text-align:left;font-size:0.95rem;line-height:1.9;color:var(--cream);">
+        1. <strong>Streams don't hold items</strong> — like a hose, data flows through!<br />
+        2. <strong>Streams wait patiently</strong> — intermediate steps are lazy until the end.<br />
+        3. <strong>Terminal step finishes the job</strong> — turns on the tap and packs data into a box.
       </div>
     </div>
-
-    <p style="margin-top:2rem;color:var(--text-muted);font-size:0.9rem;">
-      Go forth and build clean, functional Java pipelines! ✨
-    </p>
   </section>
 
   <script src="app.js"></script>

@@ -168,9 +168,23 @@ body {
 }
 
 .ctrl-btn.active {
-  background: rgba(6, 182, 212, 0.15);
+  background: rgba(6, 182, 212, 0.18);
   border-color: var(--cyan);
   color: var(--cyan);
+  box-shadow: 0 0 14px rgba(6, 182, 212, 0.4);
+}
+
+#btn-voice.active {
+  background: rgba(245, 158, 11, 0.2);
+  border-color: var(--amber);
+  color: var(--amber);
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.5);
+  animation: pulseVoice 1.5s ease infinite;
+}
+
+@keyframes pulseVoice {
+  0%, 100% { box-shadow: 0 0 10px rgba(245, 158, 11, 0.4); }
+  50% { box-shadow: 0 0 20px rgba(245, 158, 11, 0.8); }
 }
 
 /* ================================================================
@@ -261,21 +275,22 @@ body {
   transform: translateY(0);
 }
 
-/* 5th-Grade Analogy Box */
+/* 5th-Grade Story Card */
 .kid-analogy {
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(236, 72, 153, 0.1));
-  border: 1.5px dashed var(--amber);
-  border-radius: 1rem;
-  padding: 1.1rem 1.6rem;
-  max-width: 680px;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.14), rgba(236, 72, 153, 0.14));
+  border: 2px dashed var(--amber);
+  border-radius: 1.25rem;
+  padding: 1.3rem 1.8rem;
+  max-width: 720px;
   width: 100%;
-  margin-top: 1rem;
+  margin-top: 1.2rem;
   display: flex;
-  align-items: center;
-  gap: 1rem;
+  align-items: flex-start;
+  gap: 1.2rem;
   opacity: 0;
   transform: translateY(20px);
   transition: all 0.6s var(--ease-out-expo) 0.25s;
+  box-shadow: 0 10px 25px rgba(245, 158, 11, 0.15);
 }
 
 .section.active .kid-analogy {
@@ -284,7 +299,7 @@ body {
 }
 
 .kid-icon {
-  font-size: 2.2rem;
+  font-size: 2.5rem;
   flex-shrink: 0;
   animation: bounceSlow 2s ease infinite;
 }
@@ -295,14 +310,15 @@ body {
 }
 
 .kid-text {
-  font-size: 0.92rem;
-  line-height: 1.6;
-  color: #fde68a;
+  font-size: 0.98rem;
+  line-height: 1.7;
+  color: #fffbeb;
 }
 
 .kid-text strong {
   color: var(--amber);
   font-family: var(--font-pop);
+  font-size: 1.05rem;
 }
 
 /* Pop Glow Classes */
@@ -416,7 +432,7 @@ body {
 
 /* Conveyor Track */
 .conveyor-track {
-  height: 90px;
+  height: 100px;
   background: rgba(11, 15, 25, 0.9);
   border: 2px solid rgba(255, 255, 255, 0.1);
   border-radius: 1rem;
@@ -474,31 +490,33 @@ body {
 
 /* Moving Data Item Particle */
 .data-packet-bubble {
-  width: 44px;
-  height: 44px;
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
-  background: linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(16, 185, 129, 0.2));
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.25), rgba(16, 185, 129, 0.25));
   border: 2px solid var(--cyan);
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   font-size: 1.3rem;
   position: absolute;
   z-index: 5;
-  box-shadow: 0 0 12px var(--cyan);
-  transition: all 0.8s var(--ease-out-expo);
+  box-shadow: 0 0 14px var(--cyan);
+  transition: all 1.8s cubic-bezier(0.25, 1, 0.5, 1); /* Smooth slow movement */
+  font-family: var(--font-pop);
 }
 
 .data-packet-bubble.passed {
   border-color: var(--lime);
-  box-shadow: 0 0 14px var(--lime);
+  box-shadow: 0 0 16px var(--lime);
 }
 
 .data-packet-bubble.rejected {
   border-color: var(--pink);
-  box-shadow: 0 0 14px var(--pink);
+  box-shadow: 0 0 16px var(--pink);
   opacity: 0.3;
-  transform: scale(0.6) translateY(30px);
+  transform: scale(0.6) translateY(35px);
 }
 
 /* ================================================================
