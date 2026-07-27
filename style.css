@@ -1,0 +1,675 @@
+/* ================================================================
+   Java Streams Deep-Dive — Pop-Tech Data Factory Design System
+   ================================================================ */
+
+/* ---------- Design Tokens ---------- */
+:root {
+  --bg-primary: #0b0f19;
+  --bg-secondary: #131b2e;
+  --bg-card: rgba(19, 27, 46, 0.85);
+  --cyan: #06b6d4;
+  --lime: #10b981;
+  --amber: #f59e0b;
+  --pink: #ec4899;
+  --violet: #8b5cf6;
+  --cream: #f8fafc;
+  --text-muted: #94a3b8;
+  --glass-bg: rgba(255, 255, 255, 0.04);
+  --glass-border: rgba(6, 182, 212, 0.2);
+  --font-heading: 'Outfit', sans-serif;
+  --font-pop: 'Fredoka', cursive, sans-serif;
+  --font-code: 'JetBrains Mono', monospace;
+  --font-body: 'Outfit', sans-serif;
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.68, -0.3, 0.265, 1.35);
+}
+
+/* ---------- Reset ---------- */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+html {
+  scroll-snap-type: y mandatory;
+  scroll-behavior: smooth;
+  overflow-y: scroll;
+  overflow-x: hidden;
+  font-size: 16px;
+}
+
+body {
+  background: var(--bg-primary);
+  color: var(--cream);
+  font-family: var(--font-body);
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--cyan);
+  border-radius: 3px;
+  box-shadow: 0 0 10px var(--cyan);
+}
+
+/* ================================================================
+   CANVAS OVERLAY (Stream Liquid Particles)
+   ================================================================ */
+#particle-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ================================================================
+   PROGRESS BAR
+   ================================================================ */
+#progress-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 4px;
+  width: 0%;
+  background: linear-gradient(90deg, var(--cyan), var(--lime), var(--amber), var(--pink));
+  z-index: 9999;
+  transition: width 0.4s var(--ease-out-expo);
+  box-shadow: 0 0 14px var(--cyan), 0 0 28px rgba(6, 182, 212, 0.5);
+}
+
+/* ================================================================
+   NAVIGATION DOTS
+   ================================================================ */
+.nav-dots {
+  position: fixed;
+  right: 1.2rem;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.nav-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(6, 182, 212, 0.2);
+  border: 1.5px solid rgba(6, 182, 212, 0.4);
+  cursor: pointer;
+  transition: all 0.4s ease;
+  position: relative;
+}
+
+.nav-dot::after {
+  content: attr(data-label);
+  position: absolute;
+  right: 22px;
+  top: 50%;
+  transform: translateY(-50%);
+  white-space: nowrap;
+  font-family: var(--font-pop);
+  font-size: 0.7rem;
+  color: var(--cyan);
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+
+.nav-dot:hover::after { opacity: 1; }
+
+.nav-dot.active {
+  background: var(--cyan);
+  box-shadow: 0 0 10px var(--cyan), 0 0 20px rgba(6, 182, 212, 0.7);
+  transform: scale(1.4);
+  border-color: var(--cyan);
+}
+
+/* ================================================================
+   CONTROLS
+   ================================================================ */
+.controls {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  display: flex;
+  gap: 0.8rem;
+  align-items: center;
+}
+
+.ctrl-btn {
+  background: rgba(11, 15, 25, 0.8);
+  border: 1px solid var(--glass-border);
+  color: var(--cream);
+  padding: 0.5rem 1.2rem;
+  border-radius: 2rem;
+  cursor: pointer;
+  font-family: var(--font-pop);
+  font-size: 0.8rem;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  transition: all 0.3s ease;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.ctrl-btn:hover {
+  border-color: var(--cyan);
+  color: var(--cyan);
+  box-shadow: 0 0 16px rgba(6, 182, 212, 0.3);
+  transform: translateY(-2px);
+}
+
+.ctrl-btn.active {
+  background: rgba(6, 182, 212, 0.15);
+  border-color: var(--cyan);
+  color: var(--cyan);
+}
+
+/* ================================================================
+   SECTIONS — BASE
+   ================================================================ */
+.section {
+  min-height: 100vh;
+  scroll-snap-align: start;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.section::before {
+  content: '';
+  position: absolute;
+  width: 700px;
+  height: 700px;
+  border-radius: 50%;
+  filter: blur(140px);
+  opacity: 0;
+  transition: opacity 1.2s ease;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.section.active::before { opacity: 0.28; }
+
+/* ================================================================
+   TYPOGRAPHY & BADGES
+   ================================================================ */
+.section-tag {
+  font-family: var(--font-pop);
+  font-size: 0.75rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--cyan);
+  margin-bottom: 0.8rem;
+  opacity: 0;
+  transform: translateY(15px);
+  transition: all 0.6s var(--ease-out-expo);
+  background: rgba(6, 182, 212, 0.1);
+  padding: 0.3rem 0.9rem;
+  border-radius: 2rem;
+  border: 1px solid rgba(6, 182, 212, 0.3);
+}
+
+.section.active .section-tag {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.section-title {
+  font-family: var(--font-heading);
+  font-size: clamp(2.2rem, 4.8vw, 3.6rem);
+  font-weight: 800;
+  margin-bottom: 0.8rem;
+  text-align: center;
+  opacity: 0;
+  transform: translateY(30px);
+  transition: all 0.7s var(--ease-out-expo);
+  line-height: 1.2;
+}
+
+.section.active .section-title {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.section-subtitle {
+  font-size: 1.1rem;
+  color: var(--text-muted);
+  max-width: 680px;
+  text-align: center;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.7s var(--ease-out-expo) 0.15s;
+  line-height: 1.7;
+}
+
+.section.active .section-subtitle {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* 5th-Grade Analogy Box */
+.kid-analogy {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(236, 72, 153, 0.1));
+  border: 1.5px dashed var(--amber);
+  border-radius: 1rem;
+  padding: 1.1rem 1.6rem;
+  max-width: 680px;
+  width: 100%;
+  margin-top: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.6s var(--ease-out-expo) 0.25s;
+}
+
+.section.active .kid-analogy {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.kid-icon {
+  font-size: 2.2rem;
+  flex-shrink: 0;
+  animation: bounceSlow 2s ease infinite;
+}
+
+@keyframes bounceSlow {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+.kid-text {
+  font-size: 0.92rem;
+  line-height: 1.6;
+  color: #fde68a;
+}
+
+.kid-text strong {
+  color: var(--amber);
+  font-family: var(--font-pop);
+}
+
+/* Pop Glow Classes */
+.pop-cyan { color: var(--cyan); text-shadow: 0 0 12px rgba(6, 182, 212, 0.6); }
+.pop-lime { color: var(--lime); text-shadow: 0 0 12px rgba(16, 185, 129, 0.6); }
+.pop-amber { color: var(--amber); text-shadow: 0 0 12px rgba(245, 158, 11, 0.6); }
+.pop-pink { color: var(--pink); text-shadow: 0 0 12px rgba(236, 72, 153, 0.6); }
+.pop-violet { color: var(--violet); text-shadow: 0 0 12px rgba(139, 92, 246, 0.6); }
+
+/* ================================================================
+   CODE BLOCKS
+   ================================================================ */
+.code-block {
+  background: rgba(11, 15, 25, 0.85);
+  border: 1px solid rgba(6, 182, 212, 0.25);
+  border-radius: 1rem;
+  padding: 1.4rem 1.7rem;
+  font-family: var(--font-code);
+  font-size: 0.82rem;
+  line-height: 1.9;
+  overflow-x: auto;
+  max-width: 100%;
+  position: relative;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+}
+
+.code-block::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: 1rem;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.4), transparent, rgba(16, 185, 129, 0.4));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.code-line {
+  opacity: 0;
+  transform: translateX(-15px);
+  transition: all 0.5s var(--ease-out-expo);
+  white-space: pre;
+}
+
+.section.active .code-line {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Syntax colors */
+.kw { color: var(--pink); font-weight: 600; }
+.tp { color: var(--cyan); }
+.st { color: var(--lime); }
+.nm { color: var(--amber); }
+.cm { color: var(--text-muted); font-style: italic; }
+.fn { color: #60a5fa; }
+.op { color: #cbd5e1; }
+
+/* ================================================================
+   INTERACTIVE PIPELINE VISUALIZERS (Conveyor belts & stations)
+   ================================================================ */
+.pipeline-stage-box {
+  background: var(--bg-secondary);
+  border: 2.5px solid var(--glass-border);
+  border-radius: 1.5rem;
+  padding: 1.8rem;
+  width: 100%;
+  max-width: 900px;
+  margin-top: 1.8rem;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+  position: relative;
+  overflow: hidden;
+}
+
+.pipeline-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.2rem;
+}
+
+.pipeline-title-badge {
+  font-family: var(--font-pop);
+  font-size: 0.9rem;
+  color: var(--cyan);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-trigger-stream {
+  background: linear-gradient(135deg, var(--cyan), var(--lime));
+  color: #042f2e;
+  border: none;
+  padding: 0.55rem 1.4rem;
+  border-radius: 2rem;
+  font-family: var(--font-pop);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 15px rgba(6, 182, 212, 0.4);
+}
+
+.btn-trigger-stream:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 22px rgba(16, 185, 129, 0.6);
+}
+
+/* Conveyor Track */
+.conveyor-track {
+  height: 90px;
+  background: rgba(11, 15, 25, 0.9);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1rem;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.5rem;
+  overflow: hidden;
+}
+
+.conveyor-track::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent,
+    transparent 20px,
+    rgba(6, 182, 212, 0.05) 20px,
+    rgba(6, 182, 212, 0.05) 40px
+  );
+  animation: beltMove 3s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes beltMove {
+  from { background-position: 0 0; }
+  to { background-position: 40px 0; }
+}
+
+/* Flow Stations inside Conveyor */
+.station-node {
+  padding: 0.8rem 1.2rem;
+  border-radius: 0.85rem;
+  background: rgba(30, 41, 59, 0.9);
+  border: 2px solid;
+  font-family: var(--font-pop);
+  font-size: 0.8rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  z-index: 2;
+  position: relative;
+  min-width: 110px;
+  text-align: center;
+}
+
+.station-node.source { border-color: var(--cyan); color: var(--cyan); }
+.station-node.filter { border-color: var(--amber); color: var(--amber); }
+.station-node.map { border-color: var(--pink); color: var(--pink); }
+.station-node.flatmap { border-color: var(--violet); color: var(--violet); }
+.station-node.terminal { border-color: var(--lime); color: var(--lime); }
+
+/* Moving Data Item Particle */
+.data-packet-bubble {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(16, 185, 129, 0.2));
+  border: 2px solid var(--cyan);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  position: absolute;
+  z-index: 5;
+  box-shadow: 0 0 12px var(--cyan);
+  transition: all 0.8s var(--ease-out-expo);
+}
+
+.data-packet-bubble.passed {
+  border-color: var(--lime);
+  box-shadow: 0 0 14px var(--lime);
+}
+
+.data-packet-bubble.rejected {
+  border-color: var(--pink);
+  box-shadow: 0 0 14px var(--pink);
+  opacity: 0.3;
+  transform: scale(0.6) translateY(30px);
+}
+
+/* ================================================================
+   SECTION 1 — HOOK
+   ================================================================ */
+#section-hook::before {
+  background: radial-gradient(circle, var(--cyan), transparent);
+  top: 30%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+/* ================================================================
+   SECTION 2 — STREAM VS COLLECTION
+   ================================================================ */
+#section-vs::before {
+  background: radial-gradient(circle, var(--amber), transparent);
+  top: 50%;
+  left: 40%;
+  transform: translate(-50%, -50%);
+}
+
+.vs-comparison-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  max-width: 850px;
+  width: 100%;
+  margin-top: 1.8rem;
+}
+
+.vs-card {
+  background: var(--glass-bg);
+  border: 2px solid var(--glass-border);
+  border-radius: 1.2rem;
+  padding: 1.6rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.8rem;
+}
+
+.vs-card-icon {
+  font-size: 3rem;
+}
+
+.vs-card-title {
+  font-family: var(--font-pop);
+  font-size: 1.1rem;
+}
+
+/* ================================================================
+   SECTION 3 — 3 PIPELINE STAGES
+   ================================================================ */
+#section-stages::before {
+  background: radial-gradient(circle, var(--lime), transparent);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.stages-flow {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 2rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.stage-step {
+  padding: 1.4rem 1.8rem;
+  border-radius: 1.2rem;
+  border: 2px solid;
+  background: var(--bg-secondary);
+  text-align: center;
+  min-width: 200px;
+}
+
+.stage-arrow {
+  font-size: 1.8rem;
+  color: var(--cyan);
+  animation: pulseArrow 1.5s ease infinite;
+}
+
+@keyframes pulseArrow {
+  0%, 100% { opacity: 0.4; transform: translateX(0); }
+  50% { opacity: 1; transform: translateX(4px); }
+}
+
+/* ================================================================
+   SECTION 9 — LAZY EVALUATION
+   ================================================================ */
+#section-lazy::before {
+  background: radial-gradient(circle, var(--pink), transparent);
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.lazy-valve-widget {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.2rem;
+  margin-top: 1.5rem;
+  width: 100%;
+  max-width: 650px;
+}
+
+.valve-switch {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.8rem 1.5rem;
+  border-radius: 2rem;
+  background: rgba(236, 72, 153, 0.12);
+  border: 2px solid var(--pink);
+  font-family: var(--font-pop);
+  color: var(--pink);
+  cursor: pointer;
+  user-select: none;
+}
+
+/* ================================================================
+   SECTION 12 — RECAP & SUMMARY
+   ================================================================ */
+#section-recap::before {
+  background: radial-gradient(circle, var(--cyan), transparent);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 850px;
+  height: 850px;
+}
+
+.final-summary-card {
+  padding: 2rem;
+  border-radius: 1.5rem;
+  background: var(--glass-bg);
+  border: 2px solid var(--glass-border);
+  max-width: 800px;
+  width: 100%;
+  margin-top: 2rem;
+  text-align: center;
+}
+
+/* ================================================================
+   REVEAL ANIMATIONS
+   ================================================================ */
+.reveal {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.7s var(--ease-out-expo);
+}
+
+.section.active .reveal {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ================================================================
+   RESPONSIVE
+   ================================================================ */
+@media (max-width: 768px) {
+  .section { padding: 2rem 1rem; }
+  .nav-dots { right: 0.5rem; }
+  .nav-dot::after { display: none; }
+  .controls { bottom: 0.8rem; }
+  .ctrl-btn { padding: 0.4rem 0.9rem; font-size: 0.7rem; }
+  .pipeline-stage-box { padding: 1rem; }
+  .station-node { min-width: 70px; padding: 0.5rem; font-size: 0.65rem; }
+}
